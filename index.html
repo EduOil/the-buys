@@ -8,6 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="The Buys">
 <meta name="description" content="The Buys — small shops, real things, people who actually went.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>The Buys</title>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -41,6 +46,7 @@
     --border-input: 1px solid var(--ink);
   }
   *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
   body {
     background: var(--surface);
     min-height: 100vh;
@@ -48,6 +54,7 @@
     padding: 28px 16px 56px;
     font-family: var(--sans);
     transition: background 0.4s;
+    -webkit-tap-highlight-color: transparent;
   }
   .chip-nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; max-width: 420px; }
   .chip {
@@ -130,6 +137,11 @@
     transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .tab-plus:active .tab-plus-btn { transform: scale(0.92); }
+  .tab-bar.dark { background: rgba(8,3,1,0.92); border-top-color: rgba(255,255,255,0.10); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .tab-bar.dark .tab-label { color: rgba(255,255,255,0.45); }
+  .tab-bar.dark .tab-item.active .tab-label { color: #fff; }
+  .tab-bar.dark .tab-item.active svg { color: #fff; }
+  .tab-bar.dark .tab-item:not(.active) svg { color: rgba(255,255,255,0.45); }
 
   /* SIGN IN */
   .signin-wrap { flex: 1; display: flex; flex-direction: column; padding: var(--sp-6) var(--sp-5); }
@@ -213,7 +225,7 @@
   .map-pan {
     position: absolute; inset: -10%; width: 120%; height: 120%;
   }
-  .map-pan.smooth { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); }
+  .map-pan.smooth { transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
   .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .map-pin {
     position: absolute;
@@ -311,7 +323,7 @@
     display: flex; flex-direction: column;
     overflow: hidden; z-index: 4;
   }
-  .sheet.snap { transition: height 0.36s cubic-bezier(0.32,0.72,0,1); }
+  .sheet.snap { transition: height 0.26s cubic-bezier(0.32,0.72,0,1); }
   .sheet-handle-zone {
     padding: 8px 0 4px; display: flex; justify-content: center;
     cursor: grab; flex-shrink: 0; touch-action: none;
@@ -472,7 +484,7 @@
   }
   .feed-track {
     position: absolute; inset: 0;
-    transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
     will-change: transform;
   }
   .feed-track.dragging { transition: none; }
@@ -572,6 +584,18 @@
     40%  { transform: scale(1.35); }
     100% { transform: scale(1); }
   }
+  .feed-close {
+    position: absolute; top: 50px; right: 16px; z-index: 5;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(0,0,0,0.36);
+    border: 0.5px solid rgba(255,255,255,0.14);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; cursor: pointer; padding: 0;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .feed-close:hover { background: rgba(0,0,0,0.55); }
+  .feed-close:active { transform: scale(0.92); }
   .feed-tap-hint {
     position: absolute; bottom: 30%; left: 50%;
     transform: translateX(-50%);
@@ -669,6 +693,19 @@
   }
   .modal-actions { display: flex; gap: var(--sp-2); }
 
+  /* INITIAL LOADER — replaced by React render */
+  .boot {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+    background: var(--surface);
+    font-family: var(--serif);
+    color: var(--accent);
+    z-index: 9999;
+  }
+  .boot-title { font-size: 56px; font-weight: 500; line-height: 0.95; }
+  .boot-tag { font-size: 16px; color: var(--ink-60); font-family: var(--sans); letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.7; animation: boot-pulse 1.4s ease-in-out infinite; }
+  @keyframes boot-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+
   /* MOBILE — fill the real device viewport, drop the design-tool frame */
   @media (max-width: 480px) {
     body { padding: 0; background: var(--paper); min-height: 100dvh; }
@@ -684,7 +721,12 @@
 </style>
 </head>
 <body>
-<div id="app-root"></div>
+<div id="app-root">
+  <div class="boot">
+    <div class="boot-title">The<br>Buys.</div>
+    <div class="boot-tag">loading</div>
+  </div>
+</div>
 <script type="text/babel" src="tweaks-panel.jsx"></script>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef, useMemo } = React;
@@ -780,9 +822,9 @@ function StatusBar({ dark = false }) {
 }
 
 /* ── TAB BAR ── */
-function TabBar({ active, onNav, onPlus }) {
+function TabBar({ active, onNav, onPlus, dark }) {
   return (
-    <div className="tab-bar">
+    <div className={`tab-bar${dark ? ' dark' : ''}`}>
       <button className={`tab-item${active==='map'?' active':''}`} aria-label="Map" onClick={() => onNav('map')}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <title>Map</title>
@@ -1272,7 +1314,7 @@ function BusinessProfileScreen({ biz, onBack, onOpenFeed }) {
 }
 
 /* ── FEED ── */
-function FeedScreen({ onNav, onPlus, startIndex = 0, biz, savedSet, setSavedSet }) {
+function FeedScreen({ onNav, onPlus, onClose, startIndex = 0, biz, savedSet, setSavedSet }) {
   const [idx, setIdx] = useState(startIndex);
   const [muted, setMuted] = useState(true);
   const [popKey, setPopKey] = useState(0);
@@ -1344,7 +1386,14 @@ function FeedScreen({ onNav, onPlus, startIndex = 0, biz, savedSet, setSavedSet 
   const trackY = -idx * 100 + (dragging ? (drag / (wrapRef.current?.clientHeight || 700)) * 100 : 0);
 
   return (
+    <>
     <div className="feed-wrap" ref={wrapRef} onMouseDown={onDown} onTouchStart={onDown}>
+      <button className="feed-close" onClick={(e) => { e.stopPropagation(); onClose && onClose(); }} aria-label="Close feed">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <title>Close</title>
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
       <div className={`feed-track${dragging ? ' dragging' : ''}`} style={{ transform: `translateY(${trackY}%)`, height: `${items.length * 100}%` }}>
         {items.map((f, i) => (
           <div key={i} className="feed-slide" style={{ top: `${i * 100 / items.length}%`, height: `${100 / items.length}%` }}>
@@ -1412,6 +1461,8 @@ function FeedScreen({ onNav, onPlus, startIndex = 0, biz, savedSet, setSavedSet 
         </div>
       </div>
     </div>
+    <TabBar active="feed" onNav={onNav} onPlus={onPlus} dark/>
+    </>
   );
 }
 
@@ -1557,7 +1608,7 @@ function NavApp() {
   if (active === 'signin')   body = <SignInScreen onNav={navTo}/>;
   else if (active === 'map') body = <MapScreen onNav={navTo} onPlus={onPlus} onOpenBiz={openBiz}/>;
   else if (active === 'business') body = <BusinessProfileScreen biz={bizFocus} onBack={() => navTo(prevActive === 'business' ? 'map' : prevActive)} onOpenFeed={openFeedAt}/>;
-  else if (active === 'feed') body = <FeedScreen onNav={navTo} onPlus={onPlus} startIndex={feedStart} savedSet={savedSet} setSavedSet={setSavedSet}/>;
+  else if (active === 'feed') body = <FeedScreen onNav={navTo} onPlus={onPlus} startIndex={feedStart} savedSet={savedSet} setSavedSet={setSavedSet} onClose={() => navTo(prevActive === 'feed' ? 'map' : prevActive)}/>;
   else if (active === 'profile') body = <ProfileScreen onNav={navTo} onPlus={onPlus} onOpenFeed={openFeedAt} savedSet={savedSet}/>;
 
   return (
