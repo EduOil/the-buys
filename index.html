@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Buys — v2</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=VT323&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --surface: #d8c987;
+    --paper:   #f5e6a0;
+    --paper-dark: #ecd986;
+    --ink:     #9c3409;
+    --ink-60:  rgba(156,52,9,0.65);
+    --ink-35:  rgba(156,52,9,0.40);
+    --ink-15:  rgba(156,52,9,0.20);
+    --ink-08:  rgba(156,52,9,0.10);
+    --accent:  #ff5c00;
+    --feed-bg-a: #7a2906;
+    --feed-bg-b: #3a1402;
+    --map-block: #ecd986;
+    --map-road:  #f8eeb4;
+    --map-base:  #f0db8e;
+    --serif: 'VT323', 'Source Serif 4', Georgia, serif;
+    --sans:  'IBM Plex Mono', ui-monospace, monospace;
+    --display-title-size: 56px;
+    --display-biz-size:   34px;
+    --display-feed-size:  36px;
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 22px; --sp-6: 28px;
+    --r-card: 8px; --r-bezel: 44px; --r-pill: 99px;
+    --border-hairline: 0.5px solid var(--ink-15);
+    --border-input: 1px solid var(--ink);
+  }
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--surface);
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px 56px;
+    font-family: var(--sans);
+    transition: background 0.4s;
+  }
+  .chip-nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; max-width: 420px; }
+  .chip {
+    padding: 8px 14px; border-radius: var(--r-pill);
+    border: 1px solid var(--ink-35);
+    background: rgba(245,230,160,0.5);
+    color: var(--ink);
+    font-family: var(--sans); font-size: 12px; font-weight: 500;
+    cursor: pointer; min-height: 36px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .phone-bezel {
+    width: 375px; height: 812px;
+    background: #1a1612; border-radius: var(--r-bezel);
+    padding: 14px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 24px 64px rgba(0,0,0,0.35);
+  }
+  .phone-screen {
+    width: 100%; height: 100%;
+    background: var(--paper);
+    border-radius: calc(var(--r-bezel) - 10px);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    position: relative;
+    transition: background 0.3s, color 0.3s;
+  }
+  .screen-fade {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    animation: screen-in 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @keyframes screen-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px 6px;
+    flex-shrink: 0; z-index: 5;
+  }
+  .status-time { font-family: var(--sans); font-size: 14px; font-weight: 500; color: var(--ink); }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+
+  /* TAB BAR */
+  .tab-bar {
+    display: flex; align-items: stretch;
+    border-top: var(--border-hairline);
+    background: var(--paper);
+    flex-shrink: 0; height: 72px;
+    padding-bottom: 12px; z-index: 6;
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    cursor: pointer; min-width: 44px; min-height: 44px;
+    border: none; background: none;
+    transition: opacity 0.15s;
+  }
+  .tab-item:active { opacity: 0.6; }
+  .tab-label {
+    font-family: var(--sans); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-35);
+    transition: color 0.2s;
+  }
+  .tab-item.active .tab-label { color: var(--ink); }
+  .tab-item.active svg { color: var(--ink); }
+  .tab-item:not(.active) svg { color: var(--ink-35); transition: color 0.2s; }
+  .tab-plus {
+    flex: 1.2; display: flex; align-items: flex-start; justify-content: center;
+    border: none; background: none; cursor: pointer; min-width: 60px;
+  }
+  .tab-plus-btn {
+    width: 52px; height: 52px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: -18px;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .tab-plus:active .tab-plus-btn { transform: scale(0.92); }
+
+  /* SIGN IN */
+  .signin-wrap { flex: 1; display: flex; flex-direction: column; padding: var(--sp-6) var(--sp-5); }
+  .signin-brand { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--sp-4); }
+  .signin-title {
+    font-family: var(--serif); font-size: var(--display-title-size); font-weight: 500;
+    color: var(--accent); line-height: 0.95;
+  }
+  .signin-tagline {
+    font-family: var(--serif); font-size: 22px; font-weight: 400;
+    color: var(--ink-60); line-height: 1.3; max-width: 280px;
+  }
+  .signin-form { display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-6); }
+  .signin-label {
+    font-family: var(--sans); font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60);
+  }
+  .signin-input {
+    border: var(--border-input); border-radius: 0;
+    background: transparent;
+    padding: 14px var(--sp-3);
+    font-family: var(--sans); font-size: 16px; color: var(--ink);
+    outline: none; -webkit-appearance: none; width: 100%;
+  }
+  .signin-input:focus { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 0;
+    padding: 16px;
+    font-family: var(--sans); font-size: 14px; font-weight: 500;
+    cursor: pointer; min-height: 52px; letter-spacing: 0.04em;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-primary:active { transform: scale(0.985); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .signin-legal {
+    font-family: var(--sans); font-size: 12px;
+    color: var(--ink-35); line-height: 1.5; text-align: center;
+    padding-top: var(--sp-2);
+  }
+  .signin-legal a { color: var(--ink-60); text-decoration: underline; }
+
+  /* OTP */
+  .otp-row {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+    margin: var(--sp-3) 0;
+  }
+  .otp-cell {
+    aspect-ratio: 1;
+    border: var(--border-input);
+    background: transparent;
+    text-align: center;
+    font-family: var(--serif); font-size: 26px; font-weight: 500;
+    color: var(--ink);
+    outline: none; min-height: 44px;
+  }
+  .otp-cell:focus { background: var(--ink-08); }
+  .otp-resend {
+    font-family: var(--sans); font-size: 12px;
+    color: var(--ink-60); text-align: center;
+    cursor: pointer; padding: 12px; min-height: 44px;
+    border: none; background: none;
+  }
+  .otp-resend:hover { color: var(--ink); }
+  .otp-back {
+    border: none; background: none;
+    font-family: var(--sans); font-size: 12px;
+    color: var(--ink-60); cursor: pointer;
+    padding: 8px 0; min-height: 44px;
+    display: flex; align-items: center; gap: 6px;
+    align-self: flex-start;
+  }
+
+  /* MAP */
+  .map-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+  .map-canvas {
+    flex: 1; background: var(--map-base); position: relative;
+    overflow: hidden; cursor: grab; touch-action: none; user-select: none;
+  }
+  .map-canvas:active { cursor: grabbing; }
+  .map-pan {
+    position: absolute; inset: -10%; width: 120%; height: 120%;
+  }
+  .map-pan.smooth { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); }
+  .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .map-pin {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--ink);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, box-shadow 0.2s;
+    border: none; padding: 0; z-index: 2;
+  }
+  .map-pin::before { content: ''; position: absolute; inset: -10px; }
+  .map-pin:hover { background: var(--accent); }
+  .map-pin.selected {
+    background: var(--accent);
+    transform: translate(-50%, -50%) scale(1.55);
+    box-shadow: 0 0 0 3px var(--paper);
+  }
+  .map-pin.bloomed::after {
+    content: ''; position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: bloom-ring 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes bloom-ring {
+    from { opacity: 0.9; transform: scale(0.4); }
+    to   { opacity: 0; transform: scale(2.6); }
+  }
+  .map-you {
+    position: absolute; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--accent);
+    border: 2px solid var(--paper);
+    transform: translate(-50%, -50%); z-index: 1;
+  }
+  .map-you-pulse {
+    position: absolute; inset: -6px; border-radius: 50%;
+    background: var(--accent); opacity: 0.25;
+    animation: you-pulse 2.4s ease-out infinite;
+  }
+  @keyframes you-pulse {
+    0%   { transform: scale(0.6); opacity: 0.35; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+  .map-search-bar {
+    position: absolute; top: 12px; left: 16px; right: 16px;
+    background: var(--paper); border: var(--border-hairline);
+    border-radius: var(--r-pill);
+    padding: 11px 16px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: text; z-index: 4; min-height: 44px;
+    transition: border-color 0.2s;
+  }
+  .map-search-bar.active { border-color: var(--ink); border-width: 1px; }
+  .map-search-text { font-family: var(--sans); font-size: 13px; color: var(--ink-60); flex: 1; }
+  .map-search-x {
+    border: none; background: var(--ink-08);
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-60); font-size: 16px; cursor: pointer; line-height: 1;
+  }
+  .map-filters {
+    position: absolute; top: 60px; left: 0; right: 0;
+    padding: 0 16px; display: flex; gap: 6px;
+    overflow-x: auto; scrollbar-width: none; z-index: 3;
+  }
+  .map-filters::-webkit-scrollbar { display: none; }
+  .map-filter-chip {
+    flex-shrink: 0;
+    background: var(--paper); border: var(--border-hairline);
+    border-radius: var(--r-pill);
+    padding: 6px 11px;
+    font-family: var(--sans); font-size: 11px; font-weight: 500;
+    color: var(--ink-60); cursor: pointer; min-height: 30px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .map-filter-chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .map-recenter {
+    position: absolute; right: 12px;
+    width: 44px; height: 44px;
+    border-radius: 50%; background: var(--paper);
+    border: var(--border-hairline);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--ink); z-index: 3;
+    transition: bottom 0.3s cubic-bezier(0.32,0.72,0,1), transform 0.1s;
+  }
+  .map-recenter:active { transform: scale(0.92); }
+
+  /* SHEET */
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 72px;
+    background: var(--paper);
+    border-top: var(--border-hairline);
+    border-top-left-radius: 18px; border-top-right-radius: 18px;
+    display: flex; flex-direction: column;
+    overflow: hidden; z-index: 4;
+  }
+  .sheet.snap { transition: height 0.36s cubic-bezier(0.32,0.72,0,1); }
+  .sheet-handle-zone {
+    padding: 8px 0 4px; display: flex; justify-content: center;
+    cursor: grab; flex-shrink: 0; touch-action: none;
+  }
+  .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--ink-15); transition: background 0.15s; }
+  .sheet-handle-zone:active .sheet-handle { background: var(--ink-35); cursor: grabbing; }
+  .sheet-scroll { flex: 1; overflow-y: auto; padding: 0 var(--sp-5) var(--sp-4); scrollbar-width: none; }
+  .sheet-scroll::-webkit-scrollbar { display: none; }
+  .sheet-selected {
+    padding-top: var(--sp-3); padding-bottom: var(--sp-4);
+    border-bottom: var(--border-hairline);
+    margin-bottom: var(--sp-4);
+  }
+  .sheet-selected-row { display: flex; align-items: center; justify-content: space-between; }
+  .sheet-editor-note {
+    font-family: var(--serif); font-size: 19px; color: var(--ink-60);
+    margin-top: var(--sp-3); line-height: 1.3;
+  }
+  .sheet-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
+  .sheet-action { flex: 1; padding: 10px 16px; }
+  .sheet-icon-btn {
+    width: 44px; height: 44px;
+    border: 1px solid var(--ink); background: transparent;
+    border-radius: var(--r-pill);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--ink);
+    transition: background 0.15s, transform 0.1s;
+  }
+  .sheet-icon-btn:active { transform: scale(0.92); }
+  .sheet-icon-btn.on { background: var(--ink); color: var(--paper); }
+  .sheet-icon-btn.on svg { fill: var(--paper); }
+  .sheet-section { padding-top: 4px; }
+  .sheet-section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding-bottom: var(--sp-3);
+  }
+  .sheet-section-title {
+    font-family: var(--sans); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60);
+  }
+  .sheet-section-count { font-family: var(--sans); font-size: 12px; color: var(--ink-35); }
+  .sheet-list { display: flex; flex-direction: column; }
+  .sheet-list-item {
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-3) 0;
+    border: none; background: none; text-align: left; cursor: pointer;
+    border-bottom: var(--border-hairline);
+    min-height: 56px;
+    transition: padding-left 0.15s;
+  }
+  .sheet-list-item:hover { padding-left: 4px; }
+  .sheet-list-item:last-child { border-bottom: none; }
+  .sheet-list-thumb {
+    width: 44px; height: 44px; border-radius: 4px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sheet-list-thumb-letter {
+    font-family: var(--serif); font-size: 22px; font-weight: 500; color: #fff;
+  }
+  .sheet-list-body { flex: 1; min-width: 0; }
+  .sheet-list-name {
+    font-family: var(--serif); font-size: 19px; font-weight: 500;
+    color: var(--ink); line-height: 1.1;
+  }
+  .sheet-list-meta {
+    font-family: var(--sans); font-size: 11px; color: var(--ink-60);
+    margin-top: 2px; display: flex; gap: 5px;
+  }
+  .biz-name-big {
+    font-family: var(--serif); font-size: 26px; font-weight: 500;
+    color: var(--ink); line-height: 1;
+  }
+  .map-card-dist, .map-card-buys { font-family: var(--sans); font-size: 12px; color: var(--ink-60); }
+  .map-card-cat {
+    font-family: var(--sans); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-35);
+  }
+  .btn-secondary {
+    border: 1px solid var(--ink); background: transparent;
+    padding: 12px 20px;
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    color: var(--ink); cursor: pointer; min-height: 44px;
+    transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: var(--ink-08); }
+
+  /* BUSINESS PROFILE */
+  .profile-biz-wrap { flex: 1; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
+  .profile-biz-wrap::-webkit-scrollbar { display: none; }
+  .profile-biz-header {
+    padding: var(--sp-4) var(--sp-5);
+    border-bottom: var(--border-hairline);
+    display: flex; flex-direction: column; gap: var(--sp-2);
+  }
+  .biz-name {
+    font-family: var(--serif); font-size: var(--display-biz-size);
+    font-weight: 500; color: var(--ink); line-height: 1;
+  }
+  .biz-meta-row { display: flex; align-items: center; gap: var(--sp-3); }
+  .biz-cat {
+    font-family: var(--sans); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60);
+  }
+  .biz-open { font-family: var(--sans); font-size: 12px; color: var(--ink-60); }
+  .biz-open.open { color: var(--ink); font-weight: 500; }
+  .biz-addr, .biz-dist { font-family: var(--sans); font-size: 12px; color: var(--ink-60); }
+
+  .buys-section-header {
+    padding: var(--sp-3) var(--sp-5);
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: var(--border-hairline);
+  }
+  .buys-count-num { font-family: var(--serif); font-size: 28px; font-weight: 500; color: var(--ink); margin-right: 6px; }
+  .buys-count-label {
+    font-family: var(--sans); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60);
+  }
+  .sort-btn {
+    font-family: var(--sans); font-size: 12px; color: var(--ink-60);
+    cursor: pointer; padding: 12px 8px;
+    min-height: 44px; min-width: 44px;
+    display: flex; align-items: center;
+    border: none; background: none;
+  }
+  .sort-btn:hover { color: var(--ink); }
+
+  .thumbnail-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: var(--ink-08);
+  }
+  .thumbnail {
+    aspect-ratio: 9/16; position: relative; overflow: hidden;
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .thumbnail:active { transform: scale(0.97); }
+  .thumbnail-bg { position: absolute; inset: 0; transition: transform 0.4s ease-out; }
+  .thumbnail:hover .thumbnail-bg { transform: scale(1.04); }
+  .thumbnail-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: var(--sp-2);
+    background: linear-gradient(to top, rgba(20,8,2,0.75) 0%, transparent 100%);
+  }
+  .thumbnail-item {
+    font-family: var(--serif); font-size: 16px; font-weight: 500;
+    color: #fff; line-height: 1.1;
+  }
+  .thumbnail-price {
+    font-family: var(--sans); font-size: 11px;
+    color: rgba(255,255,255,0.78); margin-top: 2px;
+  }
+
+  /* FEED */
+  .feed-wrap {
+    flex: 1; background: #0a0604;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    touch-action: none; user-select: none;
+  }
+  .feed-track {
+    position: absolute; inset: 0;
+    transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+  }
+  .feed-track.dragging { transition: none; }
+  .feed-slide {
+    position: absolute; left: 0; right: 0;
+    height: 100%; overflow: hidden;
+  }
+  .feed-video-bg { position: absolute; inset: 0; }
+  .feed-disc-outer {
+    position: absolute; top: 22%; left: 50%; transform: translateX(-50%);
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.85;
+    animation: disc-spin 18s linear infinite;
+  }
+  .feed-disc-inner {
+    width: 116px; height: 116px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 18px;
+    color: rgba(255,255,255,0.55);
+  }
+  @keyframes disc-spin {
+    from { transform: translateX(-50%) rotate(0); }
+    to   { transform: translateX(-50%) rotate(360deg); }
+  }
+  .feed-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .feed-overlay > * { pointer-events: auto; }
+  .feed-top {
+    position: absolute; top: 50px; left: 0; right: 0;
+    padding: var(--sp-3) var(--sp-4);
+    display: flex; align-items: center; gap: var(--sp-2);
+  }
+  .feed-biz-chip {
+    background: rgba(0,0,0,0.32);
+    border: 0.5px solid rgba(255,255,255,0.18);
+    border-radius: var(--r-pill);
+    padding: 7px 13px;
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .feed-biz-chip:hover { background: rgba(0,0,0,0.5); }
+  .feed-biz-name {
+    font-family: var(--sans); font-size: 12px; font-weight: 500;
+    color: #fff;
+  }
+  .feed-progress {
+    position: absolute; top: 8px; left: 16px; right: 16px;
+    display: flex; gap: 4px; z-index: 3;
+  }
+  .feed-progress-bar {
+    flex: 1; height: 2px; border-radius: 1px;
+    background: rgba(255,255,255,0.25);
+    overflow: hidden;
+  }
+  .feed-progress-bar-fill {
+    height: 100%; background: rgba(255,255,255,0.95);
+    width: 0;
+  }
+  .feed-progress-bar.done .feed-progress-bar-fill { width: 100%; }
+  .feed-progress-bar.live .feed-progress-bar-fill { animation: prog 6s linear forwards; }
+  @keyframes prog { from { width: 0; } to { width: 100%; } }
+  .feed-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+    padding: 80px var(--sp-5) var(--sp-5);
+    background: linear-gradient(to top, rgba(8,3,1,0.88) 0%, rgba(8,3,1,0.4) 60%, transparent 100%);
+    display: flex; align-items: flex-end; gap: var(--sp-4);
+  }
+  .feed-info { flex: 1; display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+  .feed-item-name {
+    font-family: var(--serif); font-size: var(--display-feed-size); font-weight: 500;
+    color: #fff; line-height: 1; word-wrap: break-word;
+  }
+  .feed-price {
+    font-family: var(--sans); font-size: 14px; font-weight: 500;
+    color: rgba(255,255,255,0.78);
+  }
+  .feed-caption {
+    font-family: var(--serif); font-size: 17px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.3; margin-top: var(--sp-2);
+  }
+  .feed-rail { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 4px; }
+  .rail-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 10px 8px;
+    min-width: 44px; min-height: 44px;
+    border: none; background: none; justify-content: center;
+    transition: transform 0.12s;
+  }
+  .rail-btn:active { transform: scale(0.92); }
+  .rail-count { font-family: var(--sans); font-size: 11px; color: rgba(255,255,255,0.78); }
+  .rail-heart-pop { animation: heart-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes heart-pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+  .feed-tap-hint {
+    position: absolute; bottom: 30%; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--sans); font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    animation: hint-fade 4s ease-out 1s forwards;
+    pointer-events: none;
+  }
+  @keyframes hint-fade {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* PROFILE */
+  .profile-user-wrap { flex: 1; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
+  .profile-user-wrap::-webkit-scrollbar { display: none; }
+  .profile-top {
+    padding: var(--sp-5);
+    display: flex; flex-direction: column; gap: var(--sp-4);
+    border-bottom: var(--border-hairline);
+  }
+  .profile-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--ink-15);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .profile-handle {
+    font-family: var(--serif); font-size: 26px; font-weight: 500;
+    color: var(--ink); line-height: 1;
+  }
+  .profile-stats { display: flex; gap: var(--sp-6); }
+  .stat-num {
+    font-family: var(--sans); font-size: 22px; font-weight: 500;
+    color: var(--ink); letter-spacing: -0.02em;
+  }
+  .stat-label {
+    font-family: var(--sans); font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-35); margin-top: 2px;
+  }
+  .profile-tabs { display: flex; border-bottom: var(--border-hairline); flex-shrink: 0; position: relative; }
+  .profile-tab {
+    flex: 1; padding: 14px 0; text-align: center;
+    font-family: var(--sans); font-size: 12px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-35); cursor: pointer;
+    border: none; background: none; min-height: 44px;
+    transition: color 0.2s;
+  }
+  .profile-tab.active { color: var(--ink); }
+  .profile-tab-underline {
+    position: absolute; bottom: -1px; height: 2px;
+    background: var(--ink); border-radius: 1px;
+    transition: left 0.32s cubic-bezier(0.32,0.72,0,1), width 0.32s cubic-bezier(0.32,0.72,0,1);
+  }
+  .profile-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: var(--sp-6); gap: var(--sp-4); text-align: center;
+  }
+  .profile-empty-text {
+    font-family: var(--serif); font-size: 19px;
+    color: var(--ink-60); line-height: 1.3; max-width: 240px;
+  }
+
+  /* RECORD MODAL */
+  .modal-back {
+    position: absolute; inset: 0; z-index: 20;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: flex-end;
+    animation: fade-in 0.25s ease-out;
+  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .modal-sheet {
+    width: 100%;
+    background: var(--paper);
+    border-top-left-radius: 18px; border-top-right-radius: 18px;
+    padding: var(--sp-4) var(--sp-5) var(--sp-6);
+    animation: sheet-up 0.32s cubic-bezier(0.32,0.72,0,1);
+  }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--ink-15); margin: 0 auto var(--sp-4);
+  }
+  .modal-title {
+    font-family: var(--serif); font-size: 28px; font-weight: 500;
+    color: var(--ink); line-height: 1; margin-bottom: var(--sp-2);
+  }
+  .modal-body {
+    font-family: var(--serif); font-size: 17px;
+    color: var(--ink-60); line-height: 1.4;
+    margin-bottom: var(--sp-4);
+  }
+  .modal-actions { display: flex; gap: var(--sp-2); }
+</style>
+</head>
+<body>
+<div id="app-root"></div>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+/* ── TWEAKS ── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "mood": "paper",
+  "voice": "terminal",
+  "air": "standard"
+}/*EDITMODE-END*/;
+
+const MOODS = {
+  paper:  { surface:'#ddd8cc', paper:'#f7f4ec', paperDark:'#ede9de', ink:'#1a1a1a', accent:'#ff5c00', mapBlock:'#ddd8cc', mapRoad:'#f0ece0', mapBase:'#e8e3d8' },
+  butter: { surface:'#d8c987', paper:'#f5e6a0', paperDark:'#ecd986', ink:'#9c3409', accent:'#ff5c00', mapBlock:'#ecd986', mapRoad:'#f8eeb4', mapBase:'#f0db8e' },
+  carbon: { surface:'#0f0c08', paper:'#1f1a14', paperDark:'#2a241c', ink:'#f0e6d2', accent:'#ff5c00', mapBlock:'#2a241c', mapRoad:'#383028', mapBase:'#1a1612' },
+};
+const VOICES = {
+  editorial: { serif:"'Source Serif 4', Georgia, serif", sans:"-apple-system,'SF Pro Text',system-ui,sans-serif", title:42, biz:28, feed:28 },
+  terminal:  { serif:"'VT323', monospace", sans:"'IBM Plex Mono', ui-monospace, monospace", title:60, biz:38, feed:40 },
+  almanac:   { serif:"'Playfair Display', Georgia, serif", sans:"'IBM Plex Mono', ui-monospace, monospace", title:46, biz:30, feed:30 },
+};
+const AIRS = {
+  cozy:     { scale: 0.78 },
+  standard: { scale: 1.0  },
+  vast:     { scale: 1.22 },
+};
+
+function hex2rgb(h) {
+  const n = parseInt(h.slice(1), 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+function applyTweaks(t) {
+  const m = MOODS[t.mood] || MOODS.butter;
+  const v = VOICES[t.voice] || VOICES.terminal;
+  const a = AIRS[t.air] || AIRS.standard;
+  const r = document.documentElement.style;
+  const [ir, ig, ib] = hex2rgb(m.ink);
+  r.setProperty('--surface', m.surface);
+  r.setProperty('--paper', m.paper);
+  r.setProperty('--paper-dark', m.paperDark);
+  r.setProperty('--ink', m.ink);
+  r.setProperty('--ink-60', `rgba(${ir},${ig},${ib},0.62)`);
+  r.setProperty('--ink-35', `rgba(${ir},${ig},${ib},0.40)`);
+  r.setProperty('--ink-15', `rgba(${ir},${ig},${ib},0.20)`);
+  r.setProperty('--ink-08', `rgba(${ir},${ig},${ib},0.10)`);
+  r.setProperty('--accent', m.accent);
+  r.setProperty('--map-block', m.mapBlock);
+  r.setProperty('--map-road', m.mapRoad);
+  r.setProperty('--map-base', m.mapBase);
+  r.setProperty('--serif', v.serif);
+  r.setProperty('--sans', v.sans);
+  r.setProperty('--display-title-size', v.title + 'px');
+  r.setProperty('--display-biz-size', v.biz + 'px');
+  r.setProperty('--display-feed-size', v.feed + 'px');
+  const sc = a.scale;
+  r.setProperty('--sp-1', Math.round(4 * sc) + 'px');
+  r.setProperty('--sp-2', Math.round(8 * sc) + 'px');
+  r.setProperty('--sp-3', Math.round(12 * sc) + 'px');
+  r.setProperty('--sp-4', Math.round(16 * sc) + 'px');
+  r.setProperty('--sp-5', Math.round(22 * sc) + 'px');
+  r.setProperty('--sp-6', Math.round(28 * sc) + 'px');
+}
+
+/* ── STATUS BAR ── */
+function StatusBar({ dark = false }) {
+  const c = dark ? '#fff' : 'var(--ink)';
+  return (
+    <div className="status-bar">
+      <span className="status-time" style={{ color: c }}>9:41</span>
+      <div className="status-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill={c}>
+          <title>Signal</title>
+          <rect x="0" y="6" width="3" height="5" rx="0.5" opacity="0.4"/>
+          <rect x="4.5" y="4" width="3" height="7" rx="0.5" opacity="0.6"/>
+          <rect x="9" y="2" width="3" height="9" rx="0.5" opacity="0.8"/>
+          <rect x="13.5" y="0" width="3" height="11" rx="0.5"/>
+        </svg>
+        <svg width="14" height="11" viewBox="0 0 14 11" fill="none" stroke={c} strokeWidth="1.4" strokeLinecap="round">
+          <title>WiFi</title>
+          <path d="M7 9a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1z" fill={c}/>
+          <path d="M3.5 6.6A5 5 0 0 1 7 5.4a5 5 0 0 1 3.5 1.2" opacity="0.65"/>
+          <path d="M1 4A8.5 8.5 0 0 1 7 1.5 8.5 8.5 0 0 1 13 4" opacity="0.4"/>
+        </svg>
+        <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
+          <title>Battery</title>
+          <rect x="0.5" y="0.5" width="19" height="10" rx="2.5" stroke={c} strokeOpacity="0.4"/>
+          <rect x="2" y="2" width="14" height="7" rx="1" fill={c}/>
+          <rect x="20" y="4" width="1.5" height="3" rx="0.5" fill={c} fillOpacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ── TAB BAR ── */
+function TabBar({ active, onNav, onPlus }) {
+  return (
+    <div className="tab-bar">
+      <button className={`tab-item${active==='map'?' active':''}`} aria-label="Map" onClick={() => onNav('map')}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <title>Map</title>
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span className="tab-label">Map</span>
+      </button>
+      <button className={`tab-item${active==='feed'?' active':''}`} aria-label="Near me" onClick={() => onNav('feed')}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <title>Near me</title>
+          <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>
+          <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+        </svg>
+        <span className="tab-label">Near</span>
+      </button>
+      <button className="tab-plus" aria-label="Record a Buy" onClick={onPlus}>
+        <span className="tab-plus-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+            <title>Record a Buy</title>
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </span>
+      </button>
+      <button className={`tab-item${active==='profile'?' active':''}`} aria-label="Profile" onClick={() => onNav('profile')}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <title>Profile</title>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span className="tab-label">You</span>
+      </button>
+    </div>
+  );
+}
+
+/* ── SIGN IN ── */
+function SignInScreen({ onNav }) {
+  const [step, setStep] = useState('phone');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const otpRefs = useRef([]);
+
+  const formatPhone = (raw) => {
+    const d = raw.replace(/\D/g, '').slice(0, 10);
+    if (d.length === 0) return '';
+    if (d.length <= 3) return `(${d}`;
+    if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+  };
+  const phoneDigits = phone.replace(/\D/g, '').length;
+  const valid = phoneDigits === 10;
+
+  const onOtpChange = (i, v) => {
+    const c = v.replace(/\D/g, '').slice(0, 1);
+    const next = [...otp];
+    next[i] = c;
+    setOtp(next);
+    if (c && i < 5) otpRefs.current[i + 1]?.focus();
+    if (next.every(d => d) && next.join('').length === 6) {
+      setTimeout(() => onNav('map'), 250);
+    }
+  };
+  const onOtpKey = (i, e) => {
+    if (e.key === 'Backspace' && !otp[i] && i > 0) otpRefs.current[i - 1]?.focus();
+  };
+
+  return (
+    <>
+      <StatusBar />
+      <div className="signin-wrap">
+        {step === 'phone' && (
+          <>
+            <div className="signin-brand">
+              <div className="signin-title">The<br/>Buys.</div>
+              <div className="signin-tagline">Small shops. Real things.<br/>People who actually went.</div>
+            </div>
+            <div className="signin-form">
+              <label className="signin-label" htmlFor="phone-in">Phone number</label>
+              <input
+                id="phone-in"
+                className="signin-input"
+                type="tel"
+                placeholder="(713) 000-0000"
+                value={phone}
+                onChange={(e) => setPhone(formatPhone(e.target.value))}
+                autoComplete="tel"
+              />
+              <button className="btn-primary" disabled={!valid} onClick={() => setStep('otp')}>Send code</button>
+              <p className="signin-legal">
+                By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.<br/>We'll never share your number.
+              </p>
+            </div>
+          </>
+        )}
+        {step === 'otp' && (
+          <>
+            <button className="otp-back" onClick={() => setStep('phone')}>‹ back</button>
+            <div className="signin-brand">
+              <div className="signin-title" style={{ fontSize: 'calc(var(--display-title-size) * 0.7)' }}>Code<br/>sent.</div>
+              <div className="signin-tagline">We texted a 6-digit code to {phone || 'your phone'}.</div>
+            </div>
+            <div className="signin-form">
+              <label className="signin-label">Verification code</label>
+              <div className="otp-row">
+                {otp.map((d, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => (otpRefs.current[i] = el)}
+                    className="otp-cell"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={d}
+                    onChange={(e) => onOtpChange(i, e.target.value)}
+                    onKeyDown={(e) => onOtpKey(i, e)}
+                    autoFocus={i === 0}
+                  />
+                ))}
+              </div>
+              <button className="otp-resend">Resend code</button>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ── MAP DATA ── */
+const PINS = [
+  { id:'taft',   x:380,y:620, name:'Taft Street Coffee',   cat:'Café',       buys:21, dist:'0.3 mi', address:'1003 Tulane St',    editor:'cardamom bun is the move' },
+  { id:'colt',   x:280,y:350, name:'Coltivare',            cat:'Restaurant', buys:14, dist:'0.5 mi', address:'3320 White Oak',    editor:'wood-fired pizza, garden side' },
+  { id:'doshi',  x:550,y:480, name:'Doshi House',          cat:'Café',       buys: 9, dist:'0.4 mi', address:'3419 Emancipation', editor:'turmeric latte, no sugar' },
+  { id:'junk',   x:680,y:280, name:'Texas Junk Co.',       cat:'Vintage',    buys: 6, dist:'0.7 mi', address:'215 Welch St',      editor:'cowboy boots, used' },
+  { id:'heron',  x:720,y:580, name:'Night Heron Books',    cat:'Bookstore',  buys:11, dist:'0.6 mi', address:'1601 Westheimer',   editor:'used poetry shelf' },
+  { id:'bond',   x:180,y:520, name:'Common Bond',          cat:'Bakery',     buys:17, dist:'0.4 mi', address:'1706 Westheimer',   editor:'kouign-amann, warm' },
+  { id:'anti',   x:460,y:220, name:'Antidote Coffee',      cat:'Café',       buys:13, dist:'0.5 mi', address:'729 Studewood',     editor:'flat white' },
+  { id:'kraft',  x:800,y:720, name:'Kraftsmen Baking',     cat:'Bakery',     buys: 8, dist:'0.8 mi', address:'4100 Montrose',     editor:'sourdough miche' },
+  { id:'cactus', x:220,y:760, name:'Cactus Music',         cat:'Records',    buys:19, dist:'0.6 mi', address:'2110 Portsmouth',   editor:'used jazz bin' },
+  { id:'mid',    x:620,y:800, name:'Midtown Florals',      cat:'Florist',    buys: 7, dist:'0.7 mi', address:'420 Gray St',       editor:'ranunculus, pink' },
+  { id:'penz',   x:340,y:480, name:'Penzeys Spices',       cat:'Grocer',     buys:10, dist:'0.4 mi', address:'2018 Lexington',    editor:'smoked paprika' },
+  { id:'kuhl',   x:560,y:340, name:'Kuhl-Linscomb',        cat:'Home',       buys:12, dist:'0.6 mi', address:'2424 W Alabama',    editor:'linen tea towels' },
+  { id:'siph',   x:880,y:420, name:'Siphon Coffee',        cat:'Café',       buys: 5, dist:'0.9 mi', address:'701 W Alabama',     editor:'cortado' },
+  { id:'pink',   x:140,y:320, name:"Pinkerton's BBQ",      cat:'Restaurant', buys:22, dist:'0.5 mi', address:'1504 Airline Dr',   editor:'brisket, fatty' },
+  { id:'kid',    x:740,y:160, name:'The Kid Who Sells Coffee', cat:'Café',   buys: 4, dist:'0.7 mi', address:'906 W 19th St',     editor:'iced mocha' },
+];
+const FILTERS = ['All','Café','Restaurant','Bakery','Vintage','Bookstore','Records','Florist','Grocer','Home'];
+const SHEET_PEEK = 0.26, SHEET_HALF = 0.50, SHEET_FULL = 0.86;
+const SHEET_HEIGHT = (s) => s === 'peek' ? SHEET_PEEK : s === 'half' ? SHEET_HALF : SHEET_FULL;
+
+function thumbColorFor(cat) {
+  return { 'Café':'#ff5c00','Bakery':'#ff5c00','Restaurant':'#d61a3c','Vintage':'#7b3fbf','Bookstore':'#0e7c66','Records':'#1f4ed8','Florist':'#ec3a8a','Grocer':'#5fa800','Home':'#ff5c00' }[cat] || '#ff5c00';
+}
+
+/* ── MAP SCREEN ── */
+function MapScreen({ onNav, onPlus, onOpenBiz }) {
+  const [bloomed, setBloomed] = useState('taft');
+  const [selected, setSelected] = useState(PINS[0]);
+  const [filter, setFilter] = useState('All');
+  const [snap, setSnap] = useState('half');
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [panSmooth, setPanSmooth] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [sheetDragH, setSheetDragH] = useState(null);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const mapDrag = useRef({ active:false, sx:0, sy:0, ox:0, oy:0, moved:false });
+  const sheetDrag = useRef({ active:false, sy:0, startH:0, lastY:0, lastT:0, vy:0 });
+  const wrapRef = useRef(null);
+
+  const filtered = useMemo(() => filter === 'All' ? PINS : PINS.filter(p => p.cat === filter), [filter]);
+  useEffect(() => {
+    if (selected && !filtered.find(p => p.id === selected.id) && filtered.length) {
+      setSelected(filtered[0]);
+    }
+  }, [filtered, selected]);
+
+  const onMapDown = (e) => {
+    if (panSmooth) setPanSmooth(false);
+    const t = e.touches ? e.touches[0] : e;
+    mapDrag.current = { active: true, sx: t.clientX, sy: t.clientY, ox: pan.x, oy: pan.y, moved: false };
+  };
+  const onMove = useCallback((e) => {
+    const d = mapDrag.current;
+    if (d.active) {
+      const t = e.touches ? e.touches[0] : e;
+      const dx = t.clientX - d.sx, dy = t.clientY - d.sy;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) d.moved = true;
+      setPan({ x: Math.max(-260, Math.min(260, d.ox + dx)), y: Math.max(-260, Math.min(260, d.oy + dy)) });
+    }
+    const s = sheetDrag.current;
+    if (s.active && wrapRef.current) {
+      const t = e.touches ? e.touches[0] : e;
+      const wrapH = wrapRef.current.clientHeight;
+      const dy = t.clientY - s.sy;
+      const newH = Math.max(0.10, Math.min(0.92, s.startH - dy / wrapH));
+      const now = performance.now();
+      if (s.lastT) s.vy = (t.clientY - s.lastY) / Math.max(1, now - s.lastT);
+      s.lastY = t.clientY; s.lastT = now;
+      setSheetDragH(newH);
+    }
+  }, []);
+  const onUp = useCallback(() => {
+    if (mapDrag.current.active) mapDrag.current.active = false;
+    const s = sheetDrag.current;
+    if (s.active) {
+      s.active = false;
+      setSheetDragging(false);
+      const flick = s.vy;
+      const cur = sheetDragH;
+      let target = 'half';
+      if (flick !== undefined && Math.abs(flick) > 0.6) {
+        if (flick < 0) target = cur > SHEET_HALF ? 'full' : 'half';
+        else           target = cur < SHEET_HALF ? 'peek' : 'half';
+      } else if (cur != null) {
+        const dists = { peek: Math.abs(cur - SHEET_PEEK), half: Math.abs(cur - SHEET_HALF), full: Math.abs(cur - SHEET_FULL) };
+        target = Object.keys(dists).reduce((a,b) => dists[a] < dists[b] ? a : b);
+      }
+      setSnap(target);
+      setSheetDragH(null);
+    }
+  }, [sheetDragH]);
+
+  const onSheetDown = (e) => {
+    const t = e.touches ? e.touches[0] : e;
+    const wrapH = wrapRef.current?.clientHeight || 700;
+    const startH = SHEET_HEIGHT(snap);
+    sheetDrag.current = { active:true, sy:t.clientY, startH, lastY:t.clientY, lastT:performance.now(), vy:0 };
+    setSheetDragH(startH);
+    setSheetDragging(true);
+    e.stopPropagation();
+  };
+
+  useEffect(() => {
+    const move = (e) => onMove(e);
+    const up = () => onUp();
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    window.addEventListener('touchmove', move, { passive: true });
+    window.addEventListener('touchend', up);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      window.removeEventListener('touchmove', move);
+      window.removeEventListener('touchend', up);
+    };
+  }, [onMove, onUp]);
+
+  const handlePin = (pin, e) => {
+    if (e) e.stopPropagation();
+    if (mapDrag.current.moved) return;
+    setSelected(pin);
+    setBloomed(null);
+    setTimeout(() => setBloomed(pin.id), 20);
+    if (snap === 'peek') setSnap('half');
+    // pan map so pin is roughly centered
+    const cx = (pin.x / 10 - 50) * -3.0;
+    const cy = (pin.y / 10 - 35) * -2.6;
+    setPanSmooth(true);
+    setPan({ x: Math.max(-260, Math.min(260, cx)), y: Math.max(-260, Math.min(260, cy)) });
+  };
+  const recenter = () => { setPanSmooth(true); setPan({ x: 0, y: 0 }); };
+
+  const sheetH = sheetDragH != null ? sheetDragH : SHEET_HEIGHT(snap);
+
+  return (
+    <>
+      <StatusBar />
+      <div className="map-wrap" ref={wrapRef}>
+        <div className="map-canvas" onMouseDown={onMapDown} onTouchStart={onMapDown}>
+          <div className={`map-pan${panSmooth ? ' smooth' : ''}`} style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }}>
+            <svg className="map-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" aria-label="The Heights, Houston map">
+              <title>Map of The Heights, Houston with small businesses pinned</title>
+              <rect width="1000" height="1000" fill="var(--map-base)"/>
+              {[140,280,440,600,760,900].map(y => <line key={'h'+y} x1="0" y1={y} x2="1000" y2={y} stroke="var(--map-road)" strokeWidth="14"/>)}
+              {[120,260,420,580,740,880].map(x => <line key={'v'+x} x1={x} y1="0" x2={x} y2="1000" stroke="var(--map-road)" strokeWidth="10"/>)}
+              <line x1="0" y1="200" x2="1000" y2="900" stroke="var(--map-road)" strokeWidth="20" opacity="0.55"/>
+              <rect x="50" y="80" width="55" height="80" fill="var(--map-block)" opacity="0.6" rx="3"/>
+              <text x="500" y="60" textAnchor="middle" fontFamily="var(--sans)" fontSize="13" fill="var(--ink-35)" letterSpacing="0.18em">HEIGHTS BLVD</text>
+              <text x="78" y="125" textAnchor="middle" fontFamily="var(--sans)" fontSize="11" fill="var(--ink-60)" letterSpacing="0.12em">PARK</text>
+            </svg>
+            {filtered.map((pin) => {
+              const isSel = selected && selected.id === pin.id;
+              return (
+                <button key={pin.id}
+                  className={`map-pin${bloomed === pin.id ? ' bloomed' : ''}${isSel ? ' selected' : ''}`}
+                  style={{ left: `${pin.x/10}%`, top: `${pin.y/10}%`, backgroundColor: isSel ? 'var(--accent)' : '#ff5c00' }}
+                  onClick={(e) => handlePin(pin, e)}
+                  aria-label={`${pin.name}, ${pin.buys} Buys`}
+                ></button>
+              );
+            })}
+            <div className="map-you" style={{ left: '46%', top: '52%' }} aria-label="Your location">
+              <div className="map-you-pulse"></div>
+            </div>
+          </div>
+          <div className={`map-search-bar${searching ? ' active' : ''}`} onClick={() => setSearching(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-35)" strokeWidth="1.5" strokeLinecap="round">
+              <title>Search</title>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span className="map-search-text">{searching ? 'Try "cardamom bun"…' : 'The Heights, Houston'}</span>
+            {searching && <button className="map-search-x" onClick={(e) => { e.stopPropagation(); setSearching(false); }} aria-label="Clear">×</button>}
+          </div>
+          <div className="map-filters">
+            {FILTERS.map(f => (
+              <button key={f} className={`map-filter-chip${filter===f?' active':''}`} onClick={() => setFilter(f)}>{f}</button>
+            ))}
+          </div>
+          <button className="map-recenter" onClick={recenter} aria-label="Recenter on you" style={{ bottom: `calc(${sheetH * 100}% + 12px)` }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/>
+              <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className={`sheet${sheetDragging ? '' : ' snap'}`} style={{ height: `${sheetH * 100}%` }}>
+          <div className="sheet-handle-zone" onMouseDown={onSheetDown} onTouchStart={onSheetDown}>
+            <div className="sheet-handle"></div>
+          </div>
+          <div className="sheet-scroll">
+            {selected && (
+              <div className="sheet-selected">
+                <div className="sheet-selected-row">
+                  <button className="biz-name-big" onClick={() => onOpenBiz(selected)} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: 'inherit', textAlign: 'left' }}>{selected.name}</button>
+                  <span className="map-card-dist">{selected.dist}</span>
+                </div>
+                <div className="sheet-selected-row" style={{ gap: 'var(--sp-3)', marginTop: '4px', justifyContent: 'flex-start' }}>
+                  <span className="map-card-cat">{selected.cat}</span>
+                  <span className="map-card-buys">· {selected.buys} Buys</span>
+                </div>
+                <div className="sheet-editor-note">"{selected.editor}"</div>
+                <div className="sheet-actions">
+                  <button className="btn-secondary sheet-action" onClick={() => onOpenBiz(selected)}>Open shop</button>
+                  <button className="sheet-icon-btn" aria-label="Directions">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                    </svg>
+                  </button>
+                  <button className="sheet-icon-btn" aria-label="Save">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            {sheetH > SHEET_PEEK + 0.05 && (
+              <div className="sheet-section">
+                <div className="sheet-section-head">
+                  <span className="sheet-section-title">Nearby · The Heights</span>
+                  <span className="sheet-section-count">{filtered.length} shops</span>
+                </div>
+                <div className="sheet-list">
+                  {filtered.filter(p => p.id !== (selected && selected.id)).slice(0, 9).map(p => (
+                    <button key={p.id} className="sheet-list-item" onClick={() => handlePin(p)}>
+                      <div className="sheet-list-thumb" style={{ background: thumbColorFor(p.cat) }}>
+                        <span className="sheet-list-thumb-letter">{p.name[0]}</span>
+                      </div>
+                      <div className="sheet-list-body">
+                        <div className="sheet-list-name">{p.name}</div>
+                        <div className="sheet-list-meta">
+                          <span>{p.cat}</span><span>·</span>
+                          <span>{p.buys} Buys</span><span>·</span>
+                          <span>{p.dist}</span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <TabBar active="map" onNav={onNav} onPlus={onPlus}/>
+      </div>
+    </>
+  );
+}
+
+/* ── BUSINESS PROFILE ── */
+/* ── BUYS DATA MODEL ── */
+const AUTHORS = {
+  amaya:  { handle: '@amaya',   color: '#ff5c00', initials: 'A' },
+  jude:   { handle: '@jude.c',  color: '#1f4ed8', initials: 'J' },
+  rosa:   { handle: '@rosav',   color: '#ec3a8a', initials: 'R' },
+  tomas:  { handle: '@tomas.a', color: '#7b3fbf', initials: 'T' },
+  nik:    { handle: '@nikp',    color: '#0e7c66', initials: 'N' },
+  editor: { handle: 'the buys', color: '#1a1a1a', initials: 'B', editorial: true },
+};
+const BUYS = [
+  { id:'b1',  shopId:'bond',   author:'rosa',   item:'Kouign-\namann',     price:'$5.50', caption:'"Get there before 11. After that they\'re not warm."',         bg:'#ffb400', disc:'#ff5c00', label:'KA',  saves:67,  recordedAt:'1d ago' },
+  { id:'b2',  shopId:'taft',   author:'amaya',  item:'Cardamom\nbun',      price:'$4',    caption:'"The cardamom bun is the move. Seriously, this one."',         bg:'#ff5c00', disc:'#ffb400', label:'bun', saves:42,  recordedAt:'2d ago' },
+  { id:'b3',  shopId:'pink',   author:'tomas',  item:'Brisket,\nfatty',    price:'$28',   caption:'"Ask for the burnt ends if they\'re still pulling them off."', bg:'#d61a3c', disc:'#ff5c00', label:'BBQ', saves:128, recordedAt:'3d ago' },
+  { id:'b4',  shopId:'mid',    author:'rosa',   item:'Ranun-\nculus',      price:'$18',   caption:'"The pink ones, by the door. Lasts a full week."',             bg:'#ec3a8a', disc:'#ff5c00', label:'flr', saves:23,  recordedAt:'3d ago' },
+  { id:'b5',  shopId:'cactus', author:'jude',   item:'Used\njazz LP',      price:'$14',   caption:'"Mingus, Black Saint. Decent press. Bottom of the J bin."',   bg:'#1f4ed8', disc:'#ec3a8a', label:'LP',  saves:31,  recordedAt:'4d ago' },
+  { id:'b6',  shopId:'colt',   author:'tomas',  item:'Wood-fired\npizza',  price:'$22',   caption:'"Sit on the garden side. Get the margherita."',                 bg:'#5a2010', disc:'#ff5c00', label:'pi',  saves:38,  recordedAt:'4d ago' },
+  { id:'b7',  shopId:'taft',   author:'jude',   item:'Iced oat\nlatte',    price:'$6',    caption:'"Get it before noon. They run out of the good ice."',           bg:'#7a4a1c', disc:'#ff5c00', label:'OL',  saves:18,  recordedAt:'5d ago' },
+  { id:'b8',  shopId:'bond',   author:'editor', item:'Almond\ncroissant',  price:'$5',    caption:'"Heavier than it looks. Better than it looks."',                bg:'#ec3a8a', disc:'#ff5c00', label:'ac',  saves:24,  recordedAt:'6d ago' },
+  { id:'b9',  shopId:'pink',   author:'amaya',  item:'Pork\nribs',         price:'$22',   caption:'"Three. They give you three. Bigger than your hand."',          bg:'#7a1a1a', disc:'#d61a3c', label:'rib', saves:54,  recordedAt:'1w ago' },
+  { id:'b10', shopId:'doshi',  author:'nik',    item:'Turmeric\nlatte',    price:'$5.50', caption:'"No sugar. Trust them on this."',                                bg:'#ff5c00', disc:'#ffb400', label:'tl',  saves:14,  recordedAt:'1w ago' },
+  { id:'b11', shopId:'taft',   author:'rosa',   item:'Morning\nbun',       price:'$4.50', caption:'"Almost as good as the cardamom. Sundays only."',               bg:'#ffb400', disc:'#ff5c00', label:'mb',  saves:9,   recordedAt:'1w ago' },
+  { id:'b12', shopId:'cactus', author:'nik',    item:'Local\n7"',          price:'$8',    caption:'"Houston punk wall, by the register. Found a Bayou Boys."',     bg:'#0d2a7a', disc:'#1f4ed8', label:'7"',  saves:12,  recordedAt:'2w ago' },
+];
+const shopBuys = (shopId) => BUYS.filter(b => b.shopId === shopId);
+const shopById = (id) => PINS.find(p => p.id === id);
+const buyIndex = (id) => BUYS.findIndex(b => b.id === id);
+
+function AuthorChip({ authorKey, recordedAt, dist, dark = true }) {
+  const a = AUTHORS[authorKey] || AUTHORS.editor;
+  const tint = dark ? 'rgba(255,255,255,0.78)' : 'var(--ink-60)';
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <div style={{ width:22, height:22, borderRadius:'50%', background:a.color, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--sans)', fontSize:10, fontWeight:500, fontStyle: a.editorial ? 'italic' : 'normal', flexShrink:0 }}>
+        {a.editorial ? '❧' : a.initials}
+      </div>
+      <span style={{ fontFamily:'var(--sans)', fontSize:12, color:dark?'#fff':'var(--ink)', fontWeight:500 }}>{a.handle}</span>
+      {recordedAt && <span style={{ fontFamily:'var(--sans)', fontSize:11, color:tint }}>· {recordedAt}</span>}
+      {dist && <span style={{ fontFamily:'var(--sans)', fontSize:11, color:tint }}>· {dist} away</span>}
+    </div>
+  );
+}
+
+function BusinessProfileScreen({ biz, onBack, onOpenFeed }) {
+  const [sort, setSort] = useState('Newest');
+  const b = biz || PINS[0];
+  const items = useMemo(() => {
+    const list = shopBuys(b.id);
+    if (sort === 'Popular') return [...list].sort((a, c) => c.saves - a.saves);
+    return list;
+  }, [b.id, sort]);
+  return (
+    <>
+      <StatusBar />
+      <div className="profile-biz-wrap">
+        <div className="profile-biz-header">
+          <button onClick={onBack} style={{ border:'none', background:'none', cursor:'pointer', padding:'8px 0', minWidth:44, minHeight:44, display:'flex', alignItems:'center', color:'var(--ink-60)', alignSelf:'flex-start' }} aria-label="Back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <div className="biz-name">{b.name}</div>
+          <div className="biz-meta-row">
+            <span className="biz-cat">{b.cat}</span>
+            <span style={{ color:'var(--ink-15)', fontSize:13 }}>·</span>
+            <span className="biz-open open">Open now</span>
+          </div>
+          <div className="biz-meta-row"><span className="biz-addr">{b.address}, Houston</span></div>
+          <span className="biz-dist">{b.dist} away</span>
+        </div>
+        <div className="buys-section-header">
+          <div style={{ display:'flex', alignItems:'baseline', gap:5 }}>
+            <span className="buys-count-num">{items.length}</span>
+            <span className="buys-count-label">Buys</span>
+          </div>
+          <button className="sort-btn" onClick={() => setSort(sort==='Newest'?'Popular':'Newest')}>{sort} ▾</button>
+        </div>
+        {items.length === 0 ? (
+          <div className="profile-empty" style={{ padding:'var(--sp-6) var(--sp-5)' }}>
+            <div className="profile-empty-text">"Nobody's recorded a Buy here yet. Be the first."</div>
+          </div>
+        ) : (
+        <div className="thumbnail-grid">
+          {items.map((bu) => (
+            <button key={bu.id} className="thumbnail" onClick={() => onOpenFeed(buyIndex(bu.id))} style={{ border:'none', padding:0 }}>
+              <div className="thumbnail-bg" style={{ background: `linear-gradient(165deg, ${bu.bg} 0%, ${bu.disc} 100%)` }}></div>
+              <div className="thumbnail-overlay" style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ width:18, height:18, borderRadius:'50%', background:(AUTHORS[bu.author]||AUTHORS.editor).color, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--sans)', fontSize:9, fontWeight:500 }}>
+                    {(AUTHORS[bu.author]||AUTHORS.editor).editorial ? '❧' : (AUTHORS[bu.author]||AUTHORS.editor).initials}
+                  </div>
+                  <span style={{ fontFamily:'var(--sans)', fontSize:10, color:'rgba(255,255,255,0.82)' }}>{bu.recordedAt}</span>
+                </div>
+                <div>
+                  <div className="thumbnail-item">{bu.item.replace('\n', ' ')}</div>
+                  <div className="thumbnail-price">{bu.price}</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ── FEED ── */
+function FeedScreen({ onNav, onPlus, startIndex = 0, biz, savedSet, setSavedSet }) {
+  const [idx, setIdx] = useState(startIndex);
+  const [muted, setMuted] = useState(true);
+  const [popKey, setPopKey] = useState(0);
+  const [drag, setDrag] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef({ active:false, sy:0, lastY:0, lastT:0, vy:0 });
+  const wrapRef = useRef(null);
+
+  useEffect(() => { setIdx(startIndex); }, [startIndex]);
+
+  const items = BUYS;
+  const cur = items[idx];
+  const curShop = cur ? shopById(cur.shopId) : null;
+  const isSaved = savedSet.has(idx);
+
+  const toggleSave = () => {
+    setSavedSet(prev => {
+      const n = new Set(prev);
+      if (n.has(idx)) n.delete(idx); else n.add(idx);
+      return n;
+    });
+    setPopKey(k => k + 1);
+  };
+
+  const onDown = (e) => {
+    const t = e.touches ? e.touches[0] : e;
+    dragRef.current = { active:true, sy:t.clientY, lastY:t.clientY, lastT:performance.now(), vy:0 };
+    setDragging(true);
+  };
+  const onMv = useCallback((e) => {
+    const d = dragRef.current;
+    if (!d.active) return;
+    const t = e.touches ? e.touches[0] : e;
+    const dy = t.clientY - d.sy;
+    const now = performance.now();
+    if (d.lastT) d.vy = (t.clientY - d.lastY) / Math.max(1, now - d.lastT);
+    d.lastY = t.clientY; d.lastT = now;
+    setDrag(dy);
+  }, []);
+  const onUp2 = useCallback(() => {
+    const d = dragRef.current;
+    if (!d.active) return;
+    d.active = false;
+    setDragging(false);
+    const wrapH = wrapRef.current?.clientHeight || 700;
+    const flick = d.vy;
+    let newIdx = idx;
+    if (flick < -0.6 || drag < -wrapH * 0.22) newIdx = Math.min(items.length - 1, idx + 1);
+    else if (flick > 0.6 || drag > wrapH * 0.22) newIdx = Math.max(0, idx - 1);
+    setIdx(newIdx);
+    setDrag(0);
+  }, [drag, idx, items.length]);
+
+  useEffect(() => {
+    const m = (e) => onMv(e);
+    const u = () => onUp2();
+    window.addEventListener('mousemove', m);
+    window.addEventListener('mouseup', u);
+    window.addEventListener('touchmove', m, { passive: true });
+    window.addEventListener('touchend', u);
+    return () => {
+      window.removeEventListener('mousemove', m);
+      window.removeEventListener('mouseup', u);
+      window.removeEventListener('touchmove', m);
+      window.removeEventListener('touchend', u);
+    };
+  }, [onMv, onUp2]);
+
+  const trackY = -idx * 100 + (dragging ? (drag / (wrapRef.current?.clientHeight || 700)) * 100 : 0);
+
+  return (
+    <div className="feed-wrap" ref={wrapRef} onMouseDown={onDown} onTouchStart={onDown}>
+      <div className={`feed-track${dragging ? ' dragging' : ''}`} style={{ transform: `translateY(${trackY}%)`, height: `${items.length * 100}%` }}>
+        {items.map((f, i) => (
+          <div key={i} className="feed-slide" style={{ top: `${i * 100 / items.length}%`, height: `${100 / items.length}%` }}>
+            <div className="feed-video-bg" style={{ background: `linear-gradient(165deg, ${f.bg} 0%, ${f.disc} 80%, #0a0604 100%)` }}></div>
+            <div className="feed-disc-outer" style={{ background: f.disc }}>
+              <div className="feed-disc-inner" style={{ background: f.bg }}>{f.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="feed-progress">
+        {items.map((_, i) => (
+          <div key={i} className={`feed-progress-bar${i < idx ? ' done' : i === idx ? ' live' : ''}`} key={`${i}-${idx}`}>
+            <div className="feed-progress-bar-fill"></div>
+          </div>
+        ))}
+      </div>
+
+      <StatusBar dark />
+
+      <div className="feed-overlay">
+        <div className="feed-top" style={{ flexDirection:'column', alignItems:'flex-start', gap:8 }}>
+          <button className="feed-biz-chip" onClick={(e) => { e.stopPropagation(); onNav('business', curShop); }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <title>Location</title>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span className="feed-biz-name">{curShop ? curShop.name : ''}</span>
+          </button>
+          <AuthorChip authorKey={cur.author} recordedAt={cur.recordedAt} dist={curShop && curShop.dist}/>
+        </div>
+        {idx === 0 && <div className="feed-tap-hint">swipe up for next</div>}
+        <div className="feed-bottom">
+          <div className="feed-info">
+            <div className="feed-item-name">{cur.item.split('\n').map((s, i) => <span key={i}>{s}{i < cur.item.split('\n').length - 1 && <br/>}</span>)}</div>
+            <div className="feed-price">{cur.price}</div>
+            <div className="feed-caption">{cur.caption}</div>
+          </div>
+          <div className="feed-rail">
+            <button className="rail-btn" onClick={(e) => { e.stopPropagation(); toggleSave(); }} aria-label={isSaved?'Unsave':'Save'}>
+              <span key={popKey} className={popKey > 0 ? 'rail-heart-pop' : ''} style={{ display: 'inline-flex' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill={isSaved?'#ff5c00':'none'} stroke={isSaved?'#ff5c00':'#fff'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <title>Save</title>
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </span>
+              <span className="rail-count">{cur.saves + (isSaved ? 1 : 0)}</span>
+            </button>
+            <button className="rail-btn" onClick={(e) => { e.stopPropagation(); setMuted(!muted); }} aria-label={muted?'Unmute':'Mute'}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <title>{muted?'Unmute':'Mute'}</title>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                {muted ? (<><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></>)
+                       : (<><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></>)}
+              </svg>
+            </button>
+            <button className="rail-btn" onClick={(e) => e.stopPropagation()} aria-label="More options">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <title>More</title>
+                <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── PROFILE ── */
+function ProfileScreen({ onNav, onPlus, onOpenFeed, savedSet }) {
+  const [tab, setTab] = useState('buys');
+  const tabsRef = useRef(null);
+  const [under, setUnder] = useState({ left: 0, width: 0 });
+  useEffect(() => {
+    const el = tabsRef.current?.querySelector('.profile-tab.active');
+    if (el && tabsRef.current) {
+      const p = tabsRef.current.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      setUnder({ left: r.left - p.left + r.width * 0.25, width: r.width * 0.5 });
+    }
+  }, [tab]);
+  return (
+    <>
+      <StatusBar />
+      <div className="profile-user-wrap">
+        <div className="profile-top">
+          <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-4)' }}>
+            <div className="profile-avatar">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink-35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <title>Avatar</title>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <div className="profile-handle">@jgoldfish</div>
+              <div style={{ fontFamily:'var(--sans)', fontSize:12, color:'var(--ink-60)', marginTop:4 }}>The Heights</div>
+            </div>
+          </div>
+          <div className="profile-stats">
+            <div><span className="stat-num">{BUYS.filter(b => b.author === 'amaya').length}</span><div className="stat-label">Buys</div></div>
+            <div><span className="stat-num">{savedSet.size}</span><div className="stat-label">Saved</div></div>
+            <div><span className="stat-num">3</span><div className="stat-label">Shops</div></div>
+          </div>
+        </div>
+        <div className="profile-tabs" ref={tabsRef}>
+          <button className={`profile-tab${tab==='buys'?' active':''}`} onClick={() => setTab('buys')}>Your Buys</button>
+          <button className={`profile-tab${tab==='saved'?' active':''}`} onClick={() => setTab('saved')}>Saved</button>
+          <span className="profile-tab-underline" style={{ left: under.left, width: under.width }}></span>
+        </div>
+        {tab==='buys' ? (
+          BUYS.filter(b => b.author === 'amaya').length === 0 ? (
+            <div className="profile-empty">
+              <div className="profile-empty-text">"You haven't recorded a Buy yet — your first one tells someone about a real place."</div>
+              <button className="btn-primary" style={{ width:'100%', maxWidth:220 }} onClick={onPlus}>Record a Buy</button>
+            </div>
+          ) : (
+            <div className="thumbnail-grid">
+              {BUYS.map((bu, i) => bu.author === 'amaya' ? (
+                <button key={bu.id} className="thumbnail" onClick={() => onOpenFeed(i)} style={{ border:'none', padding:0 }}>
+                  <div className="thumbnail-bg" style={{ background: `linear-gradient(165deg, ${bu.bg} 0%, ${bu.disc} 100%)` }}></div>
+                  <div className="thumbnail-overlay">
+                    <div className="thumbnail-item">{bu.item.replace('\n',' ')}</div>
+                    <div className="thumbnail-price">{bu.price} · {(shopById(bu.shopId)||{}).name}</div>
+                  </div>
+                </button>
+              ) : null)}
+            </div>
+          )
+        ) : savedSet.size === 0 ? (
+          <div className="profile-empty">
+            <div className="profile-empty-text">"Nothing saved yet — tap the heart on any Buy to keep it here."</div>
+          </div>
+        ) : (
+          <div className="thumbnail-grid">
+            {[...savedSet].map((i) => {
+              const f = BUYS[i];
+              if (!f) return null;
+              const sh = shopById(f.shopId);
+              return (
+                <button key={i} className="thumbnail" onClick={() => onOpenFeed(i)} style={{ border:'none', padding:0 }}>
+                  <div className="thumbnail-bg" style={{ background: `linear-gradient(165deg, ${f.bg} 0%, ${f.disc} 100%)` }}></div>
+                  <div className="thumbnail-overlay">
+                    <div className="thumbnail-item">{f.item.replace('\n', ' ')}</div>
+                    <div className="thumbnail-price">{f.price} · {sh ? sh.name : ''}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <TabBar active="profile" onNav={onNav} onPlus={onPlus}/>
+    </>
+  );
+}
+
+/* ── RECORD MODAL ── */
+function RecordModal({ onClose }) {
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-handle"></div>
+        <div className="modal-title">Record a Buy.</div>
+        <div className="modal-body">
+          Point at a real thing in a real shop, say one sentence about why you'd come back for it. 15–60 seconds. We'll tag it to the shop you're standing in.
+        </div>
+        <div className="modal-actions">
+          <button className="btn-secondary" style={{ flex: 1 }} onClick={onClose}>Not now</button>
+          <button className="btn-primary" style={{ flex: 1 }} onClick={onClose}>Open camera</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── ROOT ── */
+const SCREENS = [
+  { id:'signin',   label:'Sign in' },
+  { id:'map',      label:'Map' },
+  { id:'business', label:'Business' },
+  { id:'feed',     label:'Feed' },
+  { id:'profile',  label:'Profile' },
+];
+
+function NavApp() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [active, setActive] = useState('map');
+  const [prevActive, setPrevActive] = useState('map');
+  const [feedStart, setFeedStart] = useState(0);
+  const [bizFocus, setBizFocus] = useState(PINS[0]);
+  const [showRecord, setShowRecord] = useState(false);
+  const [savedSet, setSavedSet] = useState(new Set());
+  useEffect(() => { applyTweaks(t); }, [t]);
+
+  const navTo = (id, payload) => {
+    if (id === 'business' && payload) {
+      const p = typeof payload === 'string' ? PINS.find(x => x.name === payload) || PINS[0] : payload;
+      setBizFocus(p);
+    }
+    setPrevActive(active);
+    setActive(id);
+  };
+  const openBiz = (pin) => { setBizFocus(pin); setPrevActive(active); setActive('business'); };
+  const openFeedAt = (i) => { setFeedStart(i); setPrevActive(active); setActive('feed'); };
+  const onPlus = () => setShowRecord(true);
+
+  let body;
+  if (active === 'signin')   body = <SignInScreen onNav={navTo}/>;
+  else if (active === 'map') body = <MapScreen onNav={navTo} onPlus={onPlus} onOpenBiz={openBiz}/>;
+  else if (active === 'business') body = <BusinessProfileScreen biz={bizFocus} onBack={() => navTo(prevActive === 'business' ? 'map' : prevActive)} onOpenFeed={openFeedAt}/>;
+  else if (active === 'feed') body = <FeedScreen onNav={navTo} onPlus={onPlus} startIndex={feedStart} savedSet={savedSet} setSavedSet={setSavedSet}/>;
+  else if (active === 'profile') body = <ProfileScreen onNav={navTo} onPlus={onPlus} onOpenFeed={openFeedAt} savedSet={savedSet}/>;
+
+  return (
+    <>
+      <nav className="chip-nav">
+        {SCREENS.map(s => (
+          <button key={s.id} className={`chip${active===s.id?' active':''}`} onClick={() => setActive(s.id)}>{s.label}</button>
+        ))}
+      </nav>
+      <div className="phone-bezel">
+        <div className="phone-screen">
+          <div className="screen-fade" key={active}>{body}</div>
+          {showRecord && <RecordModal onClose={() => setShowRecord(false)}/>}
+        </div>
+      </div>
+      <TweaksPanel>
+        <TweakSection label="Mood" />
+        <TweakRadio
+          label="Palette" value={t.mood}
+          options={[
+            { value: 'paper',  label: 'Paper' },
+            { value: 'butter', label: 'Butter' },
+            { value: 'carbon', label: 'Carbon' },
+          ]}
+          onChange={(v) => setTweak('mood', v)}
+        />
+        <TweakSection label="Voice" />
+        <TweakRadio
+          label="Type pairing" value={t.voice}
+          options={[
+            { value: 'editorial', label: 'Editorial' },
+            { value: 'terminal',  label: 'Terminal' },
+            { value: 'almanac',   label: 'Almanac' },
+          ]}
+          onChange={(v) => setTweak('voice', v)}
+        />
+        <TweakSection label="Air" />
+        <TweakRadio
+          label="Density" value={t.air}
+          options={[
+            { value: 'cozy',     label: 'Cozy' },
+            { value: 'standard', label: 'Standard' },
+            { value: 'vast',     label: 'Vast' },
+          ]}
+          onChange={(v) => setTweak('air', v)}
+        />
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app-root')).render(<NavApp />);
+</script>
+</body>
+</html>
